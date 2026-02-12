@@ -20,6 +20,9 @@ import java.time.LocalDate
 @Service
 class ReservationService(
     private val inventoryRepository: RoomInventoryOutPort,
+    private val reservationRepository: ReservationOutPort,
+    private val roomTypeRepository: RoomTypeOutPort,
+    private val guestRepository: GuestOutPort
 ): ReservationUseCase {
     @Transactional(readOnly = true)
     override fun getRoomInventory(roomTypeId: Long, date: LocalDate): RoomInventoryResponse {
@@ -34,8 +37,46 @@ class ReservationService(
         )
     }
 
+    @Transactional
     override fun createReservation(request: ReservationCommand): ReservationResponse {
-        TODO("Not yet implemented")
+        val guest = guestRepository.findById(request.guestId)
+            ?: throw IllegalArgumentException("게스트를 찾을 수 없습니다.")
+
+        val roomType = roomTypeRepository.findById(request.roomTypeId)
+            ?: throw IllegalArgumentException("룸 타입을 찾을 수 없습니다.")
+
+        // 날짜별 재고 차감 (체크인 ~ 체크아웃 전날)
+        var totalPrice = BigDecimal.ZERO
+        var currentDate = request.checkInDate
+
+        while (currentDate.isBefore(request.checkOutDate)) {
+            val inventory = inventoryRepository
+                .findByRoomTypeAndDateForUpdate(roomType.id, currentDate)
+                ?: throw IllegalStateException("재고 정보가 없습니다: $currentDate")
+
+            if (inventory.availableRooms <= 0) {
+                throw IllegalStateException("예약 불가: $currentDate 에 잔여 객실이 없습니다.")
+            }
+
+            inventory.availableRooms -= 1
+            inventoryRepository.save(inventory)
+
+            totalPrice += roomType.basePrice
+            currentDate = currentDate.plusDays(1)
+        }
+
+        val reservation = Reservation(
+            guest = guest,
+            hotel = roomType.hotel,
+            roomType = roomType,
+            status = ReservationStatus.CONFIRMED,
+            checkInDate = request.checkInDate,
+            checkOutDate = request.checkOutDate,
+            totalPrice = totalPrice
+        )
+
+        val saved = reservationRepository.save(reservation)
+        return saved.toResponse()
     }
 
     override fun getReservation(reservationId: Long): ReservationResponse {
@@ -46,4 +87,15 @@ class ReservationService(
         TODO("Not yet implemented")
     }
 
+    private fun Reservation.toResponse(): ReservationResponse {
+        return ReservationResponse(
+            reservationId = this.id,
+            guestId = this.guest.id,
+            hotelId = this.hotel.id,
+            roomTypeId = this.roomType.id,
+            status = this.status.name,
+            checkInDate = this.checkInDate,
+            checkOutDate = this.checkOutDate,
+            totalPrice = this.totalPrice
+        )
 }
