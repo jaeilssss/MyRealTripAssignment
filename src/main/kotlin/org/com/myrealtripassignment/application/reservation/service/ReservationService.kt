@@ -79,8 +79,12 @@ class ReservationService(
         return saved.toResponse()
     }
 
+    @Transactional(readOnly = true)
     override fun getReservation(reservationId: Long): ReservationResponse {
-        TODO("Not yet implemented")
+        val reservation = reservationRepository.findById(reservationId)
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다.")
+
+        return reservation.toResponse()
     }
 
     override fun cancelReservation(reservationId: Long) {
