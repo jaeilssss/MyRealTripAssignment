@@ -1,7 +1,16 @@
 package org.com.myrealtripassignment.application.reservation.`in`
 
+import org.com.myrealtripassignment.application.reservation.out.ReservationResponse
+import org.com.myrealtripassignment.application.reservation.out.RoomInventoryResponse
+import java.time.LocalDate
+
 interface ReservationUseCase {
-    fun reserve(command: ReservationCommand)
-    fun cancel(command: ReservationCancelCommand)
-    fun search(hotelId: Long): List<ReservationQuery>
+
+    fun getRoomInventory(roomTypeId: Long, date: LocalDate): RoomInventoryResponse
+
+    fun createReservation(request: ReservationCommand): ReservationResponse
+
+    fun getReservation(reservationId: Long): ReservationResponse
+
+    fun cancelReservation(reservationId: Long)
 }
