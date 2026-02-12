@@ -87,8 +87,29 @@ class ReservationService(
         return reservation.toResponse()
     }
 
+    @Transactional
     override fun cancelReservation(reservationId: Long) {
-        TODO("Not yet implemented")
+        val reservation = reservationRepository.findById(reservationId)
+            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다.")
+
+        if (reservation.status == ReservationStatus.CANCELLED) {
+            return
+        }
+
+        var currentDate = reservation.checkInDate
+        while (currentDate.isBefore(reservation.checkOutDate)) {
+            val inventory = inventoryRepository
+                .findByRoomTypeAndDateForUpdate(reservation.roomType.id, currentDate)
+                ?: throw IllegalStateException("재고 정보가 없습니다: $currentDate")
+
+            inventory.availableRooms += 1
+            inventoryRepository.save(inventory)
+
+            currentDate = currentDate.plusDays(1)
+        }
+
+        reservation.status = ReservationStatus.CANCELLED
+        reservationRepository.save(reservation)
     }
 
     private fun Reservation.toResponse(): ReservationResponse {
