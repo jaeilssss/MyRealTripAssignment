@@ -10,6 +10,7 @@ import org.com.myrealtripassignment.application.reservation.out.ReservationRespo
 import org.com.myrealtripassignment.application.reservation.out.RoomInventoryOutPort
 import org.com.myrealtripassignment.application.reservation.out.RoomInventoryResponse
 import org.com.myrealtripassignment.application.reservation.out.RoomTypeOutPort
+import org.com.myrealtripassignment.domain.entity.Guest
 import org.com.myrealtripassignment.domain.entity.Reservation
 import org.com.myrealtripassignment.domain.enums.ReservationStatus
 import org.springframework.stereotype.Service
@@ -39,13 +40,23 @@ class ReservationService(
 
     @Transactional
     override fun createReservation(request: ReservationCommand): ReservationResponse {
-        val guest = guestRepository.findById(request.guestId)
-            ?: throw IllegalArgumentException("게스트를 찾을 수 없습니다.")
+        // 1. 게스트 조회 또는 생성
+        val guest = request.guestEmail?.let { email ->
+            guestRepository.findByEmail(email)
+        } ?: run {
+            val newGuest = Guest(
+                name = request.guestName,
+                email = request.guestEmail,
+                phone = request.guestPhone
+            )
+            guestRepository.save(newGuest)
+        }
 
+        // 2. 룸타입 조회
         val roomType = roomTypeRepository.findById(request.roomTypeId)
             ?: throw IllegalArgumentException("룸 타입을 찾을 수 없습니다.")
 
-        // 날짜별 재고 차감 (체크인 ~ 체크아웃 전날)
+        // 3. 날짜별 재고 차감
         var totalPrice = BigDecimal.ZERO
         var currentDate = request.checkInDate
 
@@ -65,6 +76,7 @@ class ReservationService(
             currentDate = currentDate.plusDays(1)
         }
 
+        // 4. 예약 생성
         val reservation = Reservation(
             guest = guest,
             hotel = roomType.hotel,
@@ -81,16 +93,16 @@ class ReservationService(
 
     @Transactional(readOnly = true)
     override fun getReservation(reservationId: Long): ReservationResponse {
-        val reservation = reservationRepository.findById(reservationId)
-            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다.")
-
+        val reservation = reservationRepository.findById(reservationId).orElseThrow {
+            throw IllegalArgumentException("예약을 찾을 수 없습니다.")
+        }
         return reservation.toResponse()
     }
 
     @Transactional
     override fun cancelReservation(reservationId: Long) {
         val reservation = reservationRepository.findById(reservationId)
-            ?: throw IllegalArgumentException("예약을 찾을 수 없습니다.")
+            .orElseThrow { throw IllegalArgumentException("예약을 찾을 수 없습니다.") }
 
         if (reservation.status == ReservationStatus.CANCELLED) {
             return

@@ -7,10 +7,16 @@ import org.springframework.stereotype.Repository
 
 
 @Repository
-class GuestRepositoryAdapter(
+class GuestPersistenceAdapter(
     private val jpaRepository: GuestJpaRepository
 ) : GuestOutPort {
 
     override fun findById(id: Long): Guest? =
         jpaRepository.findById(id).orElse(null)
+
+    override fun findByEmail(email: String): Guest? =
+        jpaRepository.findByEmail(email)
+
+    override fun save(guest: Guest): Guest =
+        jpaRepository.save(guest)
 }

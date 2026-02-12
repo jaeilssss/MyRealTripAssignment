@@ -5,6 +5,7 @@ import org.com.myrealtripassignment.domain.entity.Reservation
 import org.com.myrealtripassignment.infrastructure.repository.ReservationJpaRepository
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
+import java.util.Optional
 
 @Component
 class ReservationPersistenceAdapter(
@@ -14,8 +15,7 @@ class ReservationPersistenceAdapter(
         return reservationJpaRepository.save(reservation)
     }
 
-    override fun findById(reservationId: Long): Reservation {
+    override fun findById(reservationId: Long): Optional<Reservation> {
         return reservationJpaRepository.findById(reservationId)
-            .orElseThrow { throw RuntimeException() }
     }
 }

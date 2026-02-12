@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
+@RestController
 @RequestMapping("/api")
 class ReservationController(
     private val reservationUseCase: ReservationUseCase
@@ -47,7 +49,8 @@ class ReservationController(
     @DeleteMapping("/reservations/{reservationId}")
     fun cancelReservation(
         @PathVariable reservationId: Long
-    ) {
+    ) : String{
         reservationUseCase.cancelReservation(reservationId)
+        return "OK"
     }
 }
