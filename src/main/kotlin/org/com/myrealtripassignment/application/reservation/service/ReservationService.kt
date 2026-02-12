@@ -98,4 +98,5 @@ class ReservationService(
             checkOutDate = this.checkOutDate,
             totalPrice = this.totalPrice
         )
+    }
 }
