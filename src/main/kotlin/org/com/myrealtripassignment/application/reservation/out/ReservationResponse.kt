@@ -5,9 +5,9 @@ import java.time.LocalDate
 
 data class ReservationResponse(
     val reservationId: Long,
-    val guestId: Long,
-    val hotelId: Long,
-    val roomTypeId: Long,
+    val guest: GuestResponse,
+    val hotel: HotelResponse,
+    val roomType: String,
     val status: String,
     val checkInDate: LocalDate,
     val checkOutDate: LocalDate,

@@ -5,12 +5,15 @@ import org.com.myrealtripassignment.application.reservation.`in`.ReservationComm
 import org.com.myrealtripassignment.application.reservation.`in`.ReservationQuery
 import org.com.myrealtripassignment.application.reservation.`in`.ReservationUseCase
 import org.com.myrealtripassignment.application.reservation.out.GuestOutPort
+import org.com.myrealtripassignment.application.reservation.out.GuestResponse
+import org.com.myrealtripassignment.application.reservation.out.HotelResponse
 import org.com.myrealtripassignment.application.reservation.out.ReservationOutPort
 import org.com.myrealtripassignment.application.reservation.out.ReservationResponse
 import org.com.myrealtripassignment.application.reservation.out.RoomInventoryOutPort
 import org.com.myrealtripassignment.application.reservation.out.RoomInventoryResponse
 import org.com.myrealtripassignment.application.reservation.out.RoomTypeOutPort
 import org.com.myrealtripassignment.domain.entity.Guest
+import org.com.myrealtripassignment.domain.entity.Hotel
 import org.com.myrealtripassignment.domain.entity.Reservation
 import org.com.myrealtripassignment.domain.enums.ReservationStatus
 import org.springframework.stereotype.Service
@@ -32,6 +35,7 @@ class ReservationService(
 
         return RoomInventoryResponse(
             roomTypeId = roomTypeId,
+            roomType = inventory.roomType.name,
             date = date,
             totalRooms = inventory.totalRooms,
             availableRooms = inventory.availableRooms
@@ -127,13 +131,28 @@ class ReservationService(
     private fun Reservation.toResponse(): ReservationResponse {
         return ReservationResponse(
             reservationId = this.id,
-            guestId = this.guest.id,
-            hotelId = this.hotel.id,
-            roomTypeId = this.roomType.id,
+            guest = guest.toResponse(),
+            hotel = hotel.toResponse(),
+            roomType = this.roomType.name,
             status = this.status.name,
             checkInDate = this.checkInDate,
             checkOutDate = this.checkOutDate,
             totalPrice = this.totalPrice
+        )
+    }
+
+    private fun Guest.toResponse(): GuestResponse {
+        return GuestResponse(
+            name = this.name,
+            email= this.email,
+            phoneNumber = this.phone
+        )
+    }
+
+    private fun Hotel.toResponse(): HotelResponse {
+        return HotelResponse(
+            name = this.name,
+            address = this.address,
         )
     }
 }
